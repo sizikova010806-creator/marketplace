@@ -96,9 +96,24 @@ class LoginRequest(BaseModel):
 # ============================================================
 # 5. ПРИЛОЖЕНИЕ FASTAPI
 # ============================================================
+from fastapi.openapi.docs import get_swagger_ui_html
 
-app = FastAPI(title="Auth Service", version="1.0.0")
+app = FastAPI(
+    title="Auth Service",
+    version="1.0.0",
+    docs_url=None,       # отключаем стандартный /docs
+    redoc_url=None,      # отключаем стандартный /redoc
+    openapi_url="/openapi.json",
+)
 
+
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui_html():
+    """Swagger UI, который ищет openapi.json по правильному пути."""
+    return get_swagger_ui_html(
+        openapi_url="/auth/openapi.json",
+        title="Auth Service — Swagger UI",
+    )
 
 @app.get("/health")
 def health():

@@ -68,6 +68,44 @@ services:
       - marketplace-net
 
   # ============================================================
+  # ORDER SERVICE
+  # ============================================================
+  order:
+    build: ./order_service
+    image: order-service:latest
+    container_name: order-1
+    environment:
+      - INSTANCE_NAME=order-1
+      - PORT=8000
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+    depends_on:
+      - consul
+    networks:
+      - marketplace-net
+
+  # ============================================================
+  # GRAPHQL GATEWAY
+  # ============================================================
+  graphql-gateway:
+    build: ./graphql_gateway
+    image: graphql-gateway:latest
+    container_name: graphql-gateway
+    environment:
+      - INSTANCE_NAME=graphql-gateway-1
+      - PORT=8000
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - CATALOG_URL=http://catalog-1:8000
+      - ORDER_URL=http://order-1:8000
+    depends_on:
+      - consul
+      - catalog-1
+      - order
+    networks:
+      - marketplace-net
+
+  # ============================================================
   # API GATEWAY (Nginx)
   # ============================================================
   gateway:
@@ -80,6 +118,9 @@ services:
       - auth
       - catalog-1
       - catalog-2
+      - order
+      - graphql-gateway
     networks:
       - marketplace-net
+      
       

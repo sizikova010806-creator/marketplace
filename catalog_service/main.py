@@ -42,8 +42,24 @@ class ProductUpdate(BaseModel):
 # 4. ПРИЛОЖЕНИЕ FASTAPI
 # ============================================================
 
-app = FastAPI(title="Catalog Service", version="1.0.0")
+from fastapi.openapi.docs import get_swagger_ui_html
 
+app = FastAPI(
+    title="Catalog Service",
+    version="1.0.0",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url="/openapi.json",
+)
+
+
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui_html():
+    """Swagger UI, который ищет openapi.json по правильному пути."""
+    return get_swagger_ui_html(
+        openapi_url="/catalog/openapi.json",
+        title="Catalog Service — Swagger UI",
+    )
 
 @app.get("/health")
 def health():
@@ -52,15 +68,19 @@ def health():
 
 
 @app.get("/products")
-def list_products():
-    """
-    Список всех товаров.
-    ВАЖНО: возвращаем instance_id — это нужно для доказательства балансировки.
-    """
+def list_products(page: int = 1, size: int = 20):
+    """Список товаров с пагинацией."""
+    all_products = list(products_db.values())
+    total = len(all_products)
+    start = (page - 1) * size
+    end = start + size
+    paginated = all_products[start:end]
     return {
         "instance_id": INSTANCE_NAME,
-        "count": len(products_db),
-        "products": list(products_db.values()),
+        "page": page,
+        "size": size,
+        "total": total,
+        "products": paginated,
     }
 
 
